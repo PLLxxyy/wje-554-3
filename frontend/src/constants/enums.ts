@@ -10,10 +10,10 @@ export enum OrderStatus {
 }
 
 export enum WarrantyStatus {
-  NONE = 'NONE',
-  ACTIVE = 'ACTIVE',
-  USED = 'USED',
-  EXPIRED = 'EXPIRED'
+  NONE = 'WARRANTY_NONE',
+  ACTIVE = 'WARRANTY_ACTIVE',
+  USED = 'WARRANTY_USED',
+  EXPIRED = 'WARRANTY_EXPIRED'
 }
 
 export enum ServiceCategory {

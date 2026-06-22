@@ -19,10 +19,10 @@ enum OrderStatus {
 }
 
 enum WarrantyStatus {
-  NONE
-  ACTIVE
-  USED
-  EXPIRED
+  WARRANTY_NONE
+  WARRANTY_ACTIVE
+  WARRANTY_USED
+  WARRANTY_EXPIRED
 }
 
 enum ServiceCategory {
