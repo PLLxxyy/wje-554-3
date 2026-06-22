@@ -40,4 +40,9 @@ export class OrderController {
   cancel(@CurrentUser() user: { sub: string; role: UserRole }, @Param('id') id: string, @Body() dto: CancelOrderDto) {
     return this.order.cancel(user, id, dto.cancelReason);
   }
+
+  @Post(':id/rework')
+  rework(@CurrentUser() user: { sub: string; role: UserRole }, @Param('id') id: string) {
+    return this.order.rework(user, id);
+  }
 }

@@ -18,6 +18,13 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum WarrantyStatus {
+  NONE
+  ACTIVE
+  USED
+  EXPIRED
+}
+
 enum ServiceCategory {
   CLEANING
   REPAIR
@@ -73,26 +80,28 @@ model ServiceItem {
 }
 
 model ServiceOrder {
-  id             String       @id @default(uuid())
-  orderNo        String       @unique
-  serviceItemId  String
-  customerId     String
-  workerId       String?
-  address        String
-  addressDetail  String
-  contactPhone   String
-  scheduledTime  DateTime
-  status         OrderStatus  @default(PENDING)
-  totalPrice     Decimal      @db.Decimal(10, 2)
-  actualDuration Int?
-  rating         Int?
-  comment        String?
-  cancelReason   String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  serviceItem    ServiceItem  @relation(fields: [serviceItemId], references: [id])
-  customer       User         @relation(fields: [customerId], references: [id])
-  worker         Worker?      @relation(fields: [workerId], references: [id])
+  id                String       @id @default(uuid())
+  orderNo           String       @unique
+  serviceItemId     String
+  customerId        String
+  workerId          String?
+  address           String
+  addressDetail     String
+  contactPhone      String
+  scheduledTime     DateTime
+  status            OrderStatus  @default(PENDING)
+  totalPrice        Decimal      @db.Decimal(10, 2)
+  actualDuration    Int?
+  rating            Int?
+  comment           String?
+  cancelReason      String?
+  completedAt       DateTime?
+  guaranteeUsed     Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  serviceItem       ServiceItem  @relation(fields: [serviceItemId], references: [id])
+  customer          User         @relation(fields: [customerId], references: [id])
+  worker            Worker?      @relation(fields: [workerId], references: [id])
 }
 
 model Worker {

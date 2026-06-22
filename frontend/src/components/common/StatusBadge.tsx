@@ -1,5 +1,5 @@
 import { Chip } from '@mui/material';
-import { OrderStatus, ServiceStatus, WorkerStatus } from '../../constants/enums';
+import { OrderStatus, ServiceStatus, WarrantyStatus, WorkerStatus } from '../../constants/enums';
 
 const labels: Record<string, string> = {
   [OrderStatus.PENDING]: '待派单',
@@ -15,7 +15,11 @@ const labels: Record<string, string> = {
   [WorkerStatus.OFFLINE]: '离线',
   [WorkerStatus.PENDING_REVIEW]: '审核中',
   [ServiceStatus.ACTIVE]: '上架',
-  [ServiceStatus.INACTIVE]: '下架'
+  [ServiceStatus.INACTIVE]: '下架',
+  [WarrantyStatus.NONE]: '无保障',
+  [WarrantyStatus.ACTIVE]: '保障中',
+  [WarrantyStatus.USED]: '已返修',
+  [WarrantyStatus.EXPIRED]: '保障已过期'
 };
 
 const colors: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' | 'secondary'> = {
@@ -30,7 +34,11 @@ const colors: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'er
   [WorkerStatus.OFFLINE]: 'default',
   [WorkerStatus.PENDING_REVIEW]: 'info',
   [ServiceStatus.ACTIVE]: 'success',
-  [ServiceStatus.INACTIVE]: 'default'
+  [ServiceStatus.INACTIVE]: 'default',
+  [WarrantyStatus.NONE]: 'default',
+  [WarrantyStatus.ACTIVE]: 'primary',
+  [WarrantyStatus.USED]: 'default',
+  [WarrantyStatus.EXPIRED]: 'warning'
 };
 
 export function StatusBadge({ value }: { value: string }) {

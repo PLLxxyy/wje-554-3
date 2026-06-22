@@ -1,4 +1,4 @@
-import { OrderStatus } from '../constants/enums';
+import { OrderStatus, WarrantyStatus } from '../constants/enums';
 import { ServiceItem } from './service';
 import { User } from './auth';
 import { Worker } from './worker';
@@ -19,9 +19,13 @@ export interface ServiceOrder {
   rating?: number;
   comment?: string;
   cancelReason?: string;
+  completedAt?: string;
+  guaranteeUsed: boolean;
   createdAt: string;
   updatedAt: string;
   serviceItem: ServiceItem;
   customer: User;
   worker?: Worker;
+  warrantyStatus: WarrantyStatus;
+  warrantyRemainingDays: number;
 }

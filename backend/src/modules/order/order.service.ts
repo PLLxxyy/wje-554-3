@@ -1,10 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { OrderStatus, UserRole } from '../../constants/enums';
+import { OrderStatus, UserRole, WarrantyStatus } from '../../constants/enums';
 import { orders, services, users, workers } from '../demo-data';
 import { NotificationService } from '../notification/notification.service';
 import { WorkerService } from '../worker/worker.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderEntity } from './entities/order.entity';
+
+const GUARANTEE_DAYS = 7;
 
 const transitions: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.ASSIGNED, OrderStatus.CANCELLED],
@@ -52,6 +54,7 @@ export class OrderService {
       scheduledTime: dto.scheduledTime,
       status: OrderStatus.PENDING,
       totalPrice: dto.totalPrice || service.basePrice,
+      guaranteeUsed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -73,6 +76,7 @@ export class OrderService {
       if (status === OrderStatus.COMPLETED) {
         order.actualDuration = 96;
         worker.totalOrders += 1;
+        order.completedAt = new Date().toISOString();
       }
     }
     order.status = status;
@@ -110,6 +114,27 @@ export class OrderService {
     return this.hydrate(order);
   }
 
+  rework(user: { sub: string; role: UserRole }, id: string) {
+    const order = this.mustFind(id);
+    if (user.role !== UserRole.CUSTOMER || order.customerId !== user.sub) throw new ForbiddenException('仅订单客户可发起返修');
+    if (![OrderStatus.COMPLETED, OrderStatus.RATED].includes(order.status)) throw new BadRequestException('仅已完工或已评价订单可返修');
+    const { warrantyStatus } = this.computeWarranty(order);
+    if (warrantyStatus === WarrantyStatus.USED) throw new BadRequestException('该订单已使用返修保障');
+    if (warrantyStatus === WarrantyStatus.EXPIRED) throw new BadRequestException('保障期已过，无法返修');
+    if (warrantyStatus === WarrantyStatus.NONE) throw new BadRequestException('该订单不支持返修');
+    order.guaranteeUsed = true;
+    order.status = OrderStatus.ASSIGNED;
+    order.updatedAt = new Date().toISOString();
+    this.notification.notify({
+      type: 'order:status_changed',
+      title: '订单返修通知',
+      message: `${order.orderNo} 客户申请返修，请及时处理`,
+      orderId: order.id,
+      userIds: [order.customerId, order.workerId || ''].filter(Boolean)
+    });
+    return this.hydrate(order);
+  }
+
   private mustFind(id: string) {
     const order = orders.find((item) => item.id === id);
     if (!order) throw new NotFoundException('订单不存在');
@@ -123,12 +148,31 @@ export class OrderService {
     return worker?.id === order.workerId;
   }
 
+  private computeWarranty(order: OrderEntity) {
+    if (!order.completedAt || ![OrderStatus.COMPLETED, OrderStatus.RATED].includes(order.status)) {
+      return { warrantyStatus: WarrantyStatus.NONE, warrantyRemainingDays: 0 };
+    }
+    if (order.guaranteeUsed) {
+      return { warrantyStatus: WarrantyStatus.USED, warrantyRemainingDays: 0 };
+    }
+    const completed = new Date(order.completedAt).getTime();
+    const now = Date.now();
+    const remainingMs = completed + GUARANTEE_DAYS * 24 * 3600 * 1000 - now;
+    const remainingDays = Math.ceil(remainingMs / (24 * 3600 * 1000));
+    if (remainingDays > 0) {
+      return { warrantyStatus: WarrantyStatus.ACTIVE, warrantyRemainingDays: remainingDays };
+    }
+    return { warrantyStatus: WarrantyStatus.EXPIRED, warrantyRemainingDays: 0 };
+  }
+
   private hydrate(order: OrderEntity) {
+    const warranty = this.computeWarranty(order);
     return {
       ...order,
       serviceItem: services.find((service) => service.id === order.serviceItemId),
       customer: users.find((customer) => customer.id === order.customerId),
-      worker: workers.find((worker) => worker.id === order.workerId)
+      worker: workers.find((worker) => worker.id === order.workerId),
+      ...warranty
     };
   }
 }

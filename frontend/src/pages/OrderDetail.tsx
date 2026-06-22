@@ -1,7 +1,7 @@
-import { Box, Button, Card, CardContent, Grid, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Grid, Stack, TextField, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { OrderStatus, UserRole } from '../constants/enums';
+import { OrderStatus, UserRole, WarrantyStatus } from '../constants/enums';
 import { OrderStatusFlow } from '../components/common/OrderStatusFlow';
 import { PageHeader } from '../components/common/PageHeader';
 import { RatingStars } from '../components/common/RatingStars';
@@ -13,7 +13,7 @@ import { datetime, money } from '../utils/format';
 export function OrderDetail() {
   const { id = '' } = useParams();
   const role = useAuthStore((state) => state.user?.role);
-  const { current, loadOrder, updateStatus, cancel, rate } = useOrderStore();
+  const { current, loadOrder, updateStatus, cancel, rate, rework } = useOrderStore();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('服务准时，沟通顺畅。');
 
@@ -38,7 +38,25 @@ export function OrderDetail() {
 
   return (
     <>
-      <PageHeader title="订单详情" subtitle={current.orderNo} actions={<StatusBadge value={current.status} />} />
+      <PageHeader
+        title="订单详情"
+        subtitle={current.orderNo}
+        actions={<Stack direction="row" spacing={1}>
+          {current.warrantyStatus !== WarrantyStatus.NONE && <StatusBadge value={current.warrantyStatus} />}
+          <StatusBadge value={current.status} />
+        </Stack>}
+      />
+      {current.warrantyStatus === WarrantyStatus.ACTIVE && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          当前订单在保障期内，剩余 {current.warrantyRemainingDays} 天，可免费申请返修一次。
+        </Alert>
+      )}
+      {current.warrantyStatus === WarrantyStatus.USED && (
+        <Alert severity="success" sx={{ mb: 2 }}>该订单已使用返修保障。</Alert>
+      )}
+      {current.warrantyStatus === WarrantyStatus.EXPIRED && (
+        <Alert severity="warning" sx={{ mb: 2 }}>订单 7 天保障期已结束，若有问题请重新下单。</Alert>
+      )}
       <Grid container spacing={3}>
         <Grid item xs={12} lg={8}>
           <Card><CardContent>
@@ -50,10 +68,22 @@ export function OrderDetail() {
               <Grid item xs={12}><Typography>地址：{current.address}{current.addressDetail}</Typography></Grid>
               <Grid item xs={12} md={6}><Typography>联系电话：{current.contactPhone}</Typography></Grid>
               <Grid item xs={12} md={6}><Typography>技师：{current.worker?.name || '待派单'}</Typography></Grid>
+              {current.completedAt && <Grid item xs={12} md={6}><Typography>完工时间：{datetime(current.completedAt)}</Typography></Grid>}
+              {current.warrantyStatus !== WarrantyStatus.NONE && (
+                <Grid item xs={12} md={6}>
+                  <Typography>
+                    保障状态：<StatusBadge value={current.warrantyStatus} />
+                    {current.warrantyStatus === WarrantyStatus.ACTIVE && ` · 剩余 ${current.warrantyRemainingDays} 天`}
+                  </Typography>
+                </Grid>
+              )}
             </Grid>
             <Box sx={{ my: 4, overflowX: 'auto' }}><OrderStatusFlow status={current.status} /></Box>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {actions.map(([label, next]) => <Button key={next} variant="contained" onClick={() => updateStatus(current.id, next)}>{label}</Button>)}
+              {role === UserRole.CUSTOMER && current.warrantyStatus === WarrantyStatus.ACTIVE && (
+                <Button color="primary" variant="outlined" onClick={() => rework(current.id)}>申请返修（免费）</Button>
+              )}
               {role !== UserRole.WORKER && ![OrderStatus.CANCELLED, OrderStatus.RATED].includes(current.status) && <Button color="error" variant="outlined" onClick={() => cancel(current.id, '用户取消')}>取消订单</Button>}
             </Stack>
           </CardContent></Card>

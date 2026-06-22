@@ -1,7 +1,7 @@
 import { Box, Card, CardContent, Grid, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { OrderStatus, UserRole } from '../constants/enums';
+import { OrderStatus, UserRole, WarrantyStatus } from '../constants/enums';
 import { OrderStatusFlow } from '../components/common/OrderStatusFlow';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatusBadge } from '../components/common/StatusBadge';
@@ -45,11 +45,19 @@ export function OrderList() {
               <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="h6">{order.orderNo}</Typography>
-                  <StatusBadge value={order.status} />
+                  <Stack direction="row" spacing={1}>
+                    {order.warrantyStatus !== WarrantyStatus.NONE && <StatusBadge value={order.warrantyStatus} />}
+                    <StatusBadge value={order.status} />
+                  </Stack>
                 </Stack>
                 <Typography sx={{ mt: 1 }}>{order.serviceItem.name} · {money(order.totalPrice)}</Typography>
                 <Typography color="text.secondary">{order.address}{order.addressDetail} · {datetime(order.scheduledTime)}</Typography>
                 <Typography color="text.secondary">技师：{order.worker?.name || '待派单'} · 客户：{order.customer.nickname}</Typography>
+                {order.warrantyStatus === WarrantyStatus.ACTIVE && (
+                  <Typography color="primary" sx={{ mt: 0.5 }}>
+                    保障剩余 {order.warrantyRemainingDays} 天，可免费返修一次
+                  </Typography>
+                )}
                 <Box sx={{ mt: 2, overflowX: 'auto' }}><OrderStatusFlow status={order.status} compact /></Box>
               </CardContent>
             </Card>

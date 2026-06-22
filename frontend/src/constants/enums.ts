@@ -9,6 +9,13 @@ export enum OrderStatus {
   CANCELLED = 'CANCELLED'
 }
 
+export enum WarrantyStatus {
+  NONE = 'NONE',
+  ACTIVE = 'ACTIVE',
+  USED = 'USED',
+  EXPIRED = 'EXPIRED'
+}
+
 export enum ServiceCategory {
   CLEANING = 'CLEANING',
   REPAIR = 'REPAIR',

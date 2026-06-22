@@ -9,5 +9,6 @@ export const orderApi = {
   updateStatus: (id: string, payload: { status: OrderStatus; workerId?: string }) =>
     request.patch<unknown, ServiceOrder>(`/orders/${id}/status`, payload),
   rate: (id: string, payload: { rating: number; comment: string }) => request.post<unknown, ServiceOrder>(`/orders/${id}/rate`, payload),
-  cancel: (id: string, cancelReason: string) => request.post<unknown, ServiceOrder>(`/orders/${id}/cancel`, { cancelReason })
+  cancel: (id: string, cancelReason: string) => request.post<unknown, ServiceOrder>(`/orders/${id}/cancel`, { cancelReason }),
+  rework: (id: string) => request.post<unknown, ServiceOrder>(`/orders/${id}/rework`)
 };

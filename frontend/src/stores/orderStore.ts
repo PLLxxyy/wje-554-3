@@ -11,6 +11,7 @@ interface OrderState {
   updateStatus: (id: string, status: OrderStatus, workerId?: string) => Promise<void>;
   cancel: (id: string, reason: string) => Promise<void>;
   rate: (id: string, rating: number, comment: string) => Promise<void>;
+  rework: (id: string) => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -30,6 +31,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
   rate: async (id, rating, comment) => {
     const updated = await orderApi.rate(id, { rating, comment });
+    set({ current: updated, orders: get().orders.map((order) => (order.id === id ? updated : order)) });
+  },
+  rework: async (id) => {
+    const updated = await orderApi.rework(id);
     set({ current: updated, orders: get().orders.map((order) => (order.id === id ? updated : order)) });
   }
 }));
